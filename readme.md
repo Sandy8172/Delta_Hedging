@@ -42,8 +42,9 @@ A full-stack real-time options data streamer built with:
 ```bash
 npm run setup
 
+---
 
-📬 Contact
+## 📬 Contact
 
 Made with ❤️ by Sandeep Singh
 Feel free to contribute, fork, or ask questions.
