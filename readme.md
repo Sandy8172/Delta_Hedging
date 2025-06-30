@@ -41,15 +41,16 @@ A full-stack real-time options data streamer built with:
 
 ```bash
 npm run setup
+```
+
+---
 
 
-📬 Contact
+## 📬 Contact
 
 Made with ❤️ by Sandeep Singh
 Feel free to contribute, fork, or ask questions.
 
-
----
 
 Let me know if you'd like to add:
 - Screenshots
@@ -59,4 +60,3 @@ Let me know if you'd like to add:
 - Documentation improvements
 - Environment variable setup
 - Deployment instructions (e.g., on Vercel or Railway)
-```
