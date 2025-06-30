@@ -188,20 +188,20 @@ const Table = ({ dataRows, type, onTotalValueChange, factor }) => {
                 </th>
                 <th
                   scope="row"
-                  className="px-6 py-1 font-medium text-gray-900 whitespace-nowrap dark:text-white"
+                  className="px-6 py-0.25 font-medium text-gray-900 whitespace-nowrap dark:text-white"
                 >
                   {ele.Strike_Price}
                 </th>
-                <td className="px-6 py-1">{ele.Time}</td>
-                <td className="px-6 py-1">{type}</td>
-                <td className="px-6 py-1">{ele.Bid}</td>
-                <td className="px-6 py-1 bg-gray-200 text-black font-semibold  dark:text-gray-200 dark:bg-gray-700">
+                <td className="px-6 py-.25">{ele.Time}</td>
+                <td className="px-6 py-.25">{type}</td>
+                <td className="px-6 py-.25">{ele.Bid}</td>
+                <td className="px-6 py-.25 bg-gray-200 text-black font-semibold  dark:text-gray-200 dark:bg-gray-700">
                   <span className="">
                     {avg >= factor ? factor : avg.toFixed(2)}
                   </span>
                 </td>
-                <td className="px-6 py-1">{ele.Ask}</td>
-                <td className="px-6 py-1">
+                <td className="px-6 py-.25">{ele.Ask}</td>
+                <td className="px-6 py-.25">
                   <input
                     type="number"
                     value={inputValues[strike] || ""}
@@ -213,14 +213,14 @@ const Table = ({ dataRows, type, onTotalValueChange, factor }) => {
                     placeholder="+/- qty"
                   />
                 </td>
-                <td className="px-6 py-1">{totalQty}</td>
-                <td className="px-6 py-1">
+                <td className="px-6 py-.25">{totalQty}</td>
+                <td className="px-6 py-.25">
                   {isNaN(totalValue) ? 0 : totalValue}
                 </td>
               </tr>
             );
           })}
-          <tr className="bg-gray-50 dark:bg-transparent dark:text-gray-300 font-bold">
+          <tr className="bg-gray-50 dark:bg-gray-950 dark:text-gray-300 font-bold sticky bottom-0 left-0 right-0">
             <td colSpan="8" className="px-6 py-2 text-right">
               TOTAL
             </td>

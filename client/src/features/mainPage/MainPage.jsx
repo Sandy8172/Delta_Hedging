@@ -13,6 +13,7 @@ import {
 } from "../../utils/socket";
 import { toastPromise } from "../../utils/toast.promise";
 import TradeHistoryDrawer from "../../components/TradeHistoryDrawer";
+import NetValueCard from "../../ui/NetValueCard";
 
 const MainPage = () => {
   const [startTime, setStartTime] = useState("09:15:00");
@@ -183,6 +184,18 @@ const MainPage = () => {
     );
   }, [callTotalValue, putTotalValue]);
 
+  const netValue = useMemo(() => {
+    const callTotalCurrValue = JSON.parse(
+      localStorage.getItem("qty_log_call") || "[]"
+    ).reduce((acc, curr) => acc + +curr?.currentValue, 0);
+
+    const putTotalCurrValue = JSON.parse(
+      localStorage.getItem("qty_log_put") || "[]"
+    ).reduce((acc, curr) => acc + +curr?.currentValue, 0);
+
+    return callTotalCurrValue + putTotalCurrValue;
+  }, [callTotalValue, putTotalValue]);
+
   return (
     <div>
       <div className="flex justify-between items-start p-3 flex-wrap">
@@ -252,7 +265,8 @@ const MainPage = () => {
             factor={data?.factor?.toFixed(2)}
           />
         )}
-        {(callTotalValue || putTotalValue) && <PnlCard pnl={pnl} />}
+        {streamStatus == "active" && <PnlCard pnl={pnl} />}
+        {streamStatus == "active" && <NetValueCard netValue={netValue} />}
 
         {!isTradeHistoryOpen ? (
           <svg
