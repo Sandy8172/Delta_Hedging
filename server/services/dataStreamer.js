@@ -129,7 +129,6 @@
 
 //     const time = sortedTimes[index];
 
-
 //     const callData = call.grouped[time] || [];
 //     const putData = put.grouped[time] || [];
 //     const spotData = spotGrouped[time] || null;
@@ -180,7 +179,7 @@
 //       spot: spotData,
 //       factor, // ✅ include in tick
 //     });
-    
+
 //     currentState.index = index + 1; // Save progress
 //     clientState.set(clientId, currentState);
 
@@ -279,6 +278,8 @@ function startStreaming(
   // ✅ Pre-group call and put datasets by time + strike for fast lookup
   const preGroupedCall = preGroupByTimeAndStrike(callDataset);
   const preGroupedPut = preGroupByTimeAndStrike(putDataset);
+  const exchange = clientState.get(clientId)?.exchange;
+  if (!exchange) return;
 
   const interval = setInterval(() => {
     const currentState = clientState.get(clientId);
@@ -302,15 +303,14 @@ function startStreaming(
     let factor = null;
     if (spotData?.Close) {
       const spot = parseFloat(spotData.Close);
-      const floor = Math.floor(spot / 100) * 100;
-      const ceil = Math.ceil(spot / 100) * 100;
-      // console.log(floor, ceil);
+      const step = exchange === "NIFTY" ? 50 : 100; // 👈 Step size based on exchange
+      const floor = Math.floor(spot / step) * step;
+      const ceil = Math.ceil(spot / step) * step;
 
       const getMidSum = (time, strike) => {
         const strikeKey = strike.toFixed(1);
         const callRow = preGroupedCall[time]?.[strikeKey];
         const putRow = preGroupedPut[time]?.[strikeKey];
-
 
         const callMid =
           callRow?.Bid && callRow?.Ask
@@ -351,7 +351,7 @@ function startStreaming(
 
 function stopStreaming(clientId) {
   clearInterval(intervalMap.get(clientId));
-  intervalMap.delete(clientId);  
+  intervalMap.delete(clientId);
 }
 
 module.exports = {

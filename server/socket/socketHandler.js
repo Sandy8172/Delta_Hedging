@@ -275,13 +275,14 @@ module.exports = function (socket) {
 
   // subscribe the socket to start spot data ------------
 
-  socket.on("subscribe", ({ startTime }) => {
-    console.log(`[${clientId}] Subscribed at ${startTime}`);
+  socket.on("subscribe", ({ startTime, exchange }) => {
+    console.log(`[${clientId}] Subscribed at ${startTime} for ${exchange}`);
 
     const prev = clientState.get(clientId) || {
       call: { strikes: [], grouped: {} },
       put: { strikes: [], grouped: {} },
       startTime,
+      exchange,
       index: 0,
       paused: false,
     };
@@ -291,6 +292,7 @@ module.exports = function (socket) {
     if (!prev.put.strikes) prev.put.strikes = [];
 
     prev.startTime = startTime;
+    prev.exchange = exchange;
     prev.index = 0;
     prev.paused = false;
 

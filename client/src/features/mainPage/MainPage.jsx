@@ -14,9 +14,11 @@ import {
 import { toastPromise } from "../../utils/toast.promise";
 import TradeHistoryDrawer from "../../components/TradeHistoryDrawer";
 import NetValueCard from "../../ui/NetValueCard";
+import toast from "react-hot-toast";
 
 const MainPage = () => {
   const [startTime, setStartTime] = useState("09:15:00");
+  const [exchange, setExchange] = useState("");
   // const [isStreaming, setIsStreaming] = useState(false);
   const [data, setData] = useState({});
   const [availableStrikes, setAvailableStrikes] = useState({
@@ -67,8 +69,12 @@ const MainPage = () => {
 
   const handleSubscribe = (e) => {
     e.preventDefault();
+    if (!exchange || !startTime) {
+      toast.error("Please enter both exchange and start time.");
+      return;
+    }
     const subscribePromise = new Promise((resolve, reject) => {
-      socketRef.current.emit("subscribe", { startTime });
+      socketRef.current.emit("subscribe", { startTime, exchange });
 
       // You can use a timeout or a "tick" confirmation event to resolve
       socketRef.current.once("tick", () => {
@@ -196,14 +202,31 @@ const MainPage = () => {
     return callTotalCurrValue + putTotalCurrValue;
   }, [callTotalValue, putTotalValue]);
 
+  // tradehistory key down event F8------------
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "F8") {
+        e.preventDefault(); // Optional: prevent browser default behavior
+        setIsTradeHistoryOpen((prev) => !prev);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
   return (
     <div>
-      <div className="flex justify-between items-start p-3 flex-wrap">
+      <div className="flex justify-start items-start p-3 flex-wrap gap-4">
         <form
           onSubmit={handleSubscribe}
-          className="max-w-sm flex flex-wrap xl:flex-nowrap justify-between items-center gap-4 "
+          className="flex flex-wrap sm:flex-nowrap gap-3 items-center w-full sm:w-auto max-w-2xl"
         >
-          <div className="relative z-0 w-full">
+          <div className="flex gap-x-2 items-center relative z-0 w-full">
             <input
               type="time"
               step="1"
@@ -221,20 +244,33 @@ const MainPage = () => {
             >
               Start Time
             </label>
+            <select
+              id="exchange"
+              value={exchange}
+              onChange={(e) => setExchange(e.target.value)}
+              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full px-1 py-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 cursor-pointer"
+              required
+            >
+              <option value="" disabled>
+                Exchange
+              </option>
+              <option value="NIFTY">Nifty</option>
+              <option value="SENSEX">Sensex</option>
+            </select>
+            <button
+              type="submit"
+              disabled={streamStatus !== "idle"}
+              className="focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800 cursor-pointer disabled:cursor-not-allowed disabled:bg-gray-500"
+            >
+              Start
+            </button>
           </div>
 
-          <button
-            type="submit"
-            disabled={streamStatus !== "idle"}
-            className="focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800 cursor-pointer disabled:cursor-not-allowed disabled:bg-gray-500"
-          >
-            Start
-          </button>
           <button
             type="button"
             onClick={handlePause}
             disabled={streamStatus !== "active"}
-            className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800 cursor-pointer disabled:cursor-not-allowed disabled:bg-gray-500"
+            className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800 cursor-pointer disabled:cursor-not-allowed disabled:bg-gray-500"
           >
             Paush
           </button>
@@ -242,7 +278,7 @@ const MainPage = () => {
             type="button"
             onClick={handleResume}
             disabled={streamStatus !== "paused"}
-            className="focus:outline-none text-white bg-purple-700 hover:bg-purple-800 focus:ring-4 focus:ring-purple-300 font-medium rounded-lg text-sm px-5 py-2.5 mb-2 dark:bg-purple-600 dark:hover:bg-purple-700 dark:focus:ring-purple-900 cursor-pointer disabled:cursor-not-allowed disabled:bg-gray-500"
+            className="focus:outline-none text-white bg-purple-700 hover:bg-purple-800 focus:ring-4 focus:ring-purple-300 font-medium rounded-lg text-sm px-5 py-2.5  dark:bg-purple-600 dark:hover:bg-purple-700 dark:focus:ring-purple-900 cursor-pointer disabled:cursor-not-allowed disabled:bg-gray-500"
           >
             Resume
           </button>
@@ -251,66 +287,53 @@ const MainPage = () => {
             type="button"
             onClick={handleTerminate}
             disabled={streamStatus === "idle"}
-            className="focus:outline-none text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900 cursor-pointer disabled:cursor-not-allowed disabled:bg-gray-500"
+            className="focus:outline-none text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900 cursor-pointer disabled:cursor-not-allowed disabled:bg-gray-500"
           >
             Terminate
           </button>
         </form>
+
+        {/* Spot Card */}
         {data?.spot && (
-          <SpotCard currentTime={data?.time} spot={data?.spot?.Close} />
+          <div className="w-42 flex-shrink-0 ml-auto">
+            <SpotCard currentTime={data?.time} spot={data?.spot?.Close} />
+          </div>
         )}
+
+        {/* Delta Card */}
         {streamStatus !== "idle" && (
-          <Factor_DeltaCard
-            delta={delta?.toFixed(2)}
-            factor={data?.factor?.toFixed(2)}
-          />
-        )}
-        {streamStatus == "active" && <PnlCard pnl={pnl} />}
-        {streamStatus == "active" && <NetValueCard netValue={netValue} />}
-
-        {!isTradeHistoryOpen ? (
-          <svg
-            className="w-6 h-6 text-gray-800 dark:text-white cursor-pointer"
-            aria-hidden="true"
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            fill="none"
-            viewBox="0 0 24 24"
-            onClick={() => setIsTradeHistoryOpen(true)}
-          >
-            <path
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M5 19V4a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v13H7a2 2 0 0 0-2 2Zm0 0a2 2 0 0 0 2 2h12M9 3v14m7 0v4"
+          <div className="w-32 flex-shrink-0">
+            <Factor_DeltaCard
+              delta={delta?.toFixed(2)}
+              factor={data?.factor?.toFixed(2)}
             />
-          </svg>
-        ) : (
-          <svg
-            className="w-6 h-6 text-gray-800 dark:text-white cursor-pointer"
-            aria-hidden="true"
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M12 6.03v13m0-13c-2.819-.831-4.715-1.076-8.029-1.023A.99.99 0 0 0 3 6v11c0 .563.466 1.014 1.03 1.007 3.122-.043 5.018.212 7.97 1.023m0-13c2.819-.831 4.715-1.076 8.029-1.023A.99.99 0 0 1 21 6v11c0 .563-.466 1.014-1.03 1.007-3.122-.043-5.018.212-7.97 1.023"
-            />
-          </svg>
+          </div>
         )}
-        {/* <p className="text-sm text-gray-500">Status: {streamStatus}</p> */}
+        {/* PnL & NetValue */}
+        {(streamStatus == "active" || streamStatus == "paused") && (
+          <div className="flex gap-2 flex-shrink-0">
+            <div className="w-36">
+              <PnlCard pnl={pnl} />
+            </div>
+            <div className="w-36">
+              <NetValueCard netValue={netValue} />
+            </div>
+          </div>
+        )}
 
-        <DarkmodeToggle />
+        {/* Dark Mode Toggle */}
+        <div className="flex-shrink-0 ml-auto">
+          <DarkmodeToggle />
+        </div>
       </div>
-      <section className="max-h-[40vh] px-6">
+
+      <section
+        className={`max-h-[40vh] px-6 ${
+          streamStatus !== "active" && streamStatus !== "paused"
+            ? "animate-slide-out-left"
+            : "animate-slide-in-left"
+        }`}
+      >
         <StrikesForm type="call" availableStrikes={availableStrikes.call} />
         {data?.call?.length > 0 && (
           <Table
@@ -321,7 +344,14 @@ const MainPage = () => {
           />
         )}
       </section>
-      <section className="mt-14 max-h-[40vh] px-6">
+
+      <section
+        className={`max-h-[40vh] mt-14 px-6 ${
+          streamStatus !== "active" && streamStatus !== "paused"
+            ? "animate-slide-out-left"
+            : "animate-slide-in-left"
+        }`}
+      >
         <StrikesForm type="put" availableStrikes={availableStrikes.put} />
         {data?.put?.length && (
           <Table

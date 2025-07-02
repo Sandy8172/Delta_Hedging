@@ -59,3 +59,34 @@
 .animate-fade-in-row {
   animation: fadeInRow 1s ease-out;
 }
+
+/* Add this to your global CSS file */
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutLeft {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 1.5s ease-out forwards;
+}
+
+.animate-slide-out-left {
+  animation: slideOutLeft 4s ease-out forwards;
+}
