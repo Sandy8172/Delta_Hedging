@@ -95,7 +95,7 @@ const Table = ({ dataRows, type, onTotalValueChange, factor }) => {
         remove: selectedStrikes,
       });
 
-      socket.once("removed", ({ type: removedType, strikes }) => {
+      socket.once("removed", ({ type: removedType }) => {
         if (removedType === type) resolve();
         else reject("Type mismatch on server");
       });

@@ -83,7 +83,7 @@ const MainPage = () => {
       });
 
       // Optional: Reject after some time if no response
-      setTimeout(() => reject("No response from server"), 10000);
+      setTimeout(() => reject("No response from server"), 150000);
     });
     const message = {
       loading: "Subscribing...",
