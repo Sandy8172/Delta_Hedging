@@ -15,6 +15,7 @@ import { toastPromise } from "../../utils/toast.promise";
 import TradeHistoryDrawer from "../../components/TradeHistoryDrawer";
 import NetValueCard from "../../ui/NetValueCard";
 import toast from "react-hot-toast";
+import TopDrawer from "../../components/TopDrawer";
 
 const MainPage = () => {
   const [startTime, setStartTime] = useState("09:15:00");
@@ -26,7 +27,7 @@ const MainPage = () => {
     put: [],
   });
   const [streamStatus, setStreamStatus] = useState("idle"); // idle | active | paused
-
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isTradeHistoryOpen, setIsTradeHistoryOpen] = useState(false);
   const [callTotalValue, setCallTotalValue] = useState(0);
   const [putTotalValue, setPutTotalValue] = useState(0);
@@ -83,7 +84,7 @@ const MainPage = () => {
       });
 
       // Optional: Reject after some time if no response
-      setTimeout(() => reject("No response from server"), 150000);
+      setTimeout(() => reject("No response from server"), 15000);
     });
     const message = {
       loading: "Subscribing...",
@@ -248,7 +249,7 @@ const MainPage = () => {
               id="exchange"
               value={exchange}
               onChange={(e) => setExchange(e.target.value)}
-              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full px-1 py-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 cursor-pointer"
+              className="bg-gray-50 border border-gray-300 text-gray-900 text-xs rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full px-1 py-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 cursor-pointer"
               required
             >
               <option value="" disabled>
@@ -260,7 +261,7 @@ const MainPage = () => {
             <button
               type="submit"
               disabled={streamStatus !== "idle"}
-              className="focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800 cursor-pointer disabled:cursor-not-allowed disabled:bg-gray-500"
+              className="focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-xs px-5 py-2.5 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800 cursor-pointer disabled:cursor-not-allowed disabled:bg-gray-500"
             >
               Start
             </button>
@@ -270,7 +271,7 @@ const MainPage = () => {
             type="button"
             onClick={handlePause}
             disabled={streamStatus !== "active"}
-            className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800 cursor-pointer disabled:cursor-not-allowed disabled:bg-gray-500"
+            className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-xs px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800 cursor-pointer disabled:cursor-not-allowed disabled:bg-gray-500"
           >
             Paush
           </button>
@@ -278,7 +279,7 @@ const MainPage = () => {
             type="button"
             onClick={handleResume}
             disabled={streamStatus !== "paused"}
-            className="focus:outline-none text-white bg-purple-700 hover:bg-purple-800 focus:ring-4 focus:ring-purple-300 font-medium rounded-lg text-sm px-5 py-2.5  dark:bg-purple-600 dark:hover:bg-purple-700 dark:focus:ring-purple-900 cursor-pointer disabled:cursor-not-allowed disabled:bg-gray-500"
+            className="focus:outline-none text-white bg-purple-700 hover:bg-purple-800 focus:ring-4 focus:ring-purple-300 font-medium rounded-lg text-xs px-5 py-2.5  dark:bg-purple-600 dark:hover:bg-purple-700 dark:focus:ring-purple-900 cursor-pointer disabled:cursor-not-allowed disabled:bg-gray-500"
           >
             Resume
           </button>
@@ -287,12 +288,36 @@ const MainPage = () => {
             type="button"
             onClick={handleTerminate}
             disabled={streamStatus === "idle"}
-            className="focus:outline-none text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900 cursor-pointer disabled:cursor-not-allowed disabled:bg-gray-500"
+            className="focus:outline-none text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-xs px-5 py-2.5 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900 cursor-pointer disabled:cursor-not-allowed disabled:bg-gray-500"
           >
             Terminate
           </button>
         </form>
-
+        <div className="text-center">
+          <button
+            className="overflow-y-auto text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800 cursor-pointer"
+            type="button"
+            onClick={() => setIsDropdownOpen(true)}
+          >
+            <svg
+              className="w-5 h-5 text-white"
+              aria-hidden="true"
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="m19 9-7 7-7-7"
+              />
+            </svg>
+          </button>
+        </div>
         {/* Spot Card */}
         {data?.spot && (
           <div className="w-42 flex-shrink-0 ml-auto">
@@ -365,6 +390,7 @@ const MainPage = () => {
       {isTradeHistoryOpen && (
         <TradeHistoryDrawer onClose={() => setIsTradeHistoryOpen(false)} />
       )}
+      {isDropdownOpen && <TopDrawer onClose={() => setIsDropdownOpen(false)} />}
     </div>
   );
 };

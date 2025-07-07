@@ -344,7 +344,7 @@ function startStreaming(
     clientState.set(clientId, currentState);
 
     index++;
-  }, 1000);
+  }, state.interval || 1000);
 
   intervalMap.set(clientId, interval);
 }

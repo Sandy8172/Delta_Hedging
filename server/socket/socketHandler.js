@@ -190,6 +190,11 @@ const {
   stopStreaming,
   groupOptionData,
 } = require("../services/dataStreamer");
+const {
+  saveSession,
+  getAllSessions,
+  deleteSession,
+} = require("../utils/sessionStore");
 
 let datasets = {
   call: [],
@@ -285,6 +290,7 @@ module.exports = function (socket) {
       exchange,
       index: 0,
       paused: false,
+      interval: 1000,
     };
 
     // Ensure strikes arrays are initialized
@@ -295,6 +301,7 @@ module.exports = function (socket) {
     prev.exchange = exchange;
     prev.index = 0;
     prev.paused = false;
+    prev.interval = prev.interval || 1000;
 
     // Use existing strikes if present
     prev.call.grouped = groupOptionData(
@@ -417,6 +424,111 @@ module.exports = function (socket) {
     stopStreaming(clientId);
     clientState.delete(clientId);
     console.log(`[${clientId}] Terminated and removed.`);
+  });
+
+  // dynamically update streaming interval
+  socket.on("update_interval", ({ interval }) => {
+    const state = clientState.get(clientId);
+    if (!state) return;
+
+    state.interval = Number(interval) || 1000; // fallback to 1000ms
+    clientState.set(clientId, state);
+
+    console.log(`[${clientId}] Updated interval to ${state.interval}ms`);
+
+    // Restart streaming with new interval -------------
+    stopStreaming(clientId);
+    startStreaming(
+      socket,
+      state,
+      datasets.spot,
+      datasets.call,
+      datasets.put,
+      clientState,
+      clientId
+    );
+
+    socket.emit("interval_updated", {
+      status: "successfull",
+      interval: state.interval,
+    });
+  });
+
+  // expose current interval ----
+  socket.on("get_interval", () => {
+    const state = clientState.get(clientId);
+    if (!state) return;
+
+    socket.emit("interval_updated", {
+      interval: state.interval || 1000,
+      status: "interval fetched successfully",
+    });
+  });
+
+  // saveing the session -----------------
+
+  socket.on("save_session", ({ sessionName }) => {
+    const state = clientState.get(clientId);
+    if (!state) return socket.emit("session_saved", { success: false });
+
+    saveSession(clientId, state, sessionName);
+    socket.emit("session_saved", { success: true, state });
+  });
+
+  // getting the session -----------------
+
+  socket.on("get_sessions", () => {
+    const allSessions = getAllSessions();
+
+    const filteredSessions = {};
+
+    for (const sessionKey in allSessions) {
+      const { savedAt, name, exchange } = allSessions[sessionKey];
+      filteredSessions[sessionKey] = { savedAt, name, exchange };
+    }
+
+    socket.emit("sessions_list", filteredSessions);
+  });
+
+  // resuming the session-----------------
+
+  socket.on("resume_session", ({ sessionKey }) => {
+    const allSessions = getAllSessions();
+    const session = allSessions[sessionKey];
+
+    if (!session) {
+      console.warn(
+        `[${clientId}] Tried to resume unknown session: ${sessionKey}`
+      );
+      return socket.emit("resumed_session", { success: false });
+    }
+
+    clientState.set(clientId, session);
+    stopStreaming(clientId);
+    startStreaming(
+      socket,
+      session,
+      datasets.spot,
+      datasets.call,
+      datasets.put,
+      clientState,
+      clientId
+    );
+    socket.emit("resumed_session", { success: true });
+  });
+
+  // deleting the session-----------------
+
+  socket.on("delete_session", ({ sessionKey }) => {
+    const success = deleteSession(sessionKey);
+
+    socket.emit("session_deleted", {
+      success,
+      sessionKey,
+      message: success
+        ? `Session "${sessionKey}" deleted successfully.`
+        : `Session "${sessionKey}" not found.`,
+    });
   });
 
   // socket disconnect event--------------
