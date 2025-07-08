@@ -27,6 +27,7 @@ const MainPage = () => {
     put: [],
   });
   const [streamStatus, setStreamStatus] = useState("idle"); // idle | active | paused
+  const [loading, setLoading] = useState(true);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isTradeHistoryOpen, setIsTradeHistoryOpen] = useState(false);
   const [callTotalValue, setCallTotalValue] = useState(0);
@@ -52,6 +53,14 @@ const MainPage = () => {
       } else {
         setStreamStatus("active");
       }
+    });
+
+    // Ask if data is ready -------------------
+    socket.emit("check_data_ready");
+
+    // Listen for response
+    socket.on("data_ready", ({ ready }) => {
+      setLoading(!ready);
     });
 
     socket.on("strikes_list", ({ call, put }) => {
@@ -260,10 +269,10 @@ const MainPage = () => {
             </select>
             <button
               type="submit"
-              disabled={streamStatus !== "idle"}
+              disabled={streamStatus !== "idle" || loading}
               className="focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-xs px-5 py-2.5 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800 cursor-pointer disabled:cursor-not-allowed disabled:bg-gray-500"
             >
-              Start
+              {loading ? "Loading..." : "Subscribe"}
             </button>
           </div>
 

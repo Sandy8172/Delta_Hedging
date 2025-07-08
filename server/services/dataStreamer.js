@@ -207,23 +207,27 @@ const timeToSeconds = (t) => {
   return h * 3600 + m * 60 + s;
 };
 
-function groupOptionData(dataset, strikes, startTimeStr) {
-  const startSecs = timeToSeconds(startTimeStr);
-  const strikeNums = strikes.map(Number);
-  const map = {};
+function groupFromPreGrouped(preGrouped, strikes, startSecs) {
+  if (!strikes.length) return {}; // ✅ No strikes? Return immediately
+  const result = {};
+  const strikeSet = new Set(strikes.map((s) => String(s))); // ✅ convert to string
 
-  dataset.forEach((row) => {
-    const timeStr = row.Time.padStart(8, "0");
-    const secs = timeToSeconds(timeStr);
-    if (secs < startSecs) return;
+  for (const time in preGrouped) {
+    const secs = timeToSeconds(time);
+    if (secs < startSecs) continue;
 
-    if (strikeNums.includes(Number(row.Strike_Price))) {
-      if (!map[timeStr]) map[timeStr] = [];
-      map[timeStr].push(row);
+    const rowMap = preGrouped[time];
+    const filtered = [];
+
+    for (const strike of strikeSet) {
+      const row = rowMap[strike];
+      if (row) filtered.push(row);
     }
-  });
 
-  return map;
+    if (filtered.length) result[time] = filtered;
+  }
+
+  return result;
 }
 
 function groupSpotData(dataset, startTimeStr) {
@@ -256,8 +260,8 @@ function startStreaming(
   socket,
   state,
   spotDataset,
-  callDataset,
-  putDataset,
+  preGroupedCall,
+  preGroupedPut,
   clientState,
   clientId
 ) {
@@ -275,9 +279,6 @@ function startStreaming(
 
   let index = state.index || 0;
 
-  // ✅ Pre-group call and put datasets by time + strike for fast lookup
-  const preGroupedCall = preGroupByTimeAndStrike(callDataset);
-  const preGroupedPut = preGroupByTimeAndStrike(putDataset);
   const exchange = clientState.get(clientId)?.exchange;
   if (!exchange) return;
 
@@ -357,5 +358,7 @@ function stopStreaming(clientId) {
 module.exports = {
   startStreaming,
   stopStreaming,
-  groupOptionData,
+  preGroupByTimeAndStrike,
+  groupFromPreGrouped,
+  timeToSeconds,
 };

@@ -188,7 +188,9 @@ const { loadCSVData } = require("../utils/csvLoader");
 const {
   startStreaming,
   stopStreaming,
-  groupOptionData,
+  preGroupByTimeAndStrike,
+  groupFromPreGrouped,
+  timeToSeconds,
 } = require("../services/dataStreamer");
 const {
   saveSession,
@@ -201,11 +203,21 @@ let datasets = {
   put: [],
   spot: [],
 };
+let preGroupedCall = {};
+let preGroupedPut = {};
+let isDataReady = false;
 
 (async () => {
   datasets.call = await loadCSVData(path.join(__dirname, "../data/call.csv"));
   datasets.put = await loadCSVData(path.join(__dirname, "../data/put.csv"));
   datasets.spot = await loadCSVData(path.join(__dirname, "../data/spot.csv"));
+
+  // ✅ Only call after datasets are loaded
+  preGroupedCall = preGroupByTimeAndStrike(datasets.call);
+  preGroupedPut = preGroupByTimeAndStrike(datasets.put);
+
+  isDataReady = true;
+  console.log("📦 Datasets loaded & grouped");
 })();
 
 const clientState = new Map(); // socket.id -> state
@@ -251,6 +263,17 @@ module.exports = function (socket) {
     });
   });
 
+  // notify frontend that data is ready
+
+  socket.on("check_data_ready", () => {
+    const checkInterval = setInterval(() => {
+      if (isDataReady) {
+        socket.emit("data_ready", { ready: true });
+        clearInterval(checkInterval);
+      }
+    }, 200); // Check every 200ms
+  });
+
   // Resume stream on reconnect if state exists
   if (clientState.has(clientId)) {
     const existing = clientState.get(clientId);
@@ -270,8 +293,8 @@ module.exports = function (socket) {
         socket,
         existing,
         datasets.spot,
-        datasets.call,
-        datasets.put,
+        preGroupedCall,
+        preGroupedPut,
         clientState,
         clientId
       );
@@ -304,15 +327,15 @@ module.exports = function (socket) {
     prev.interval = prev.interval || 1000;
 
     // Use existing strikes if present
-    prev.call.grouped = groupOptionData(
-      datasets.call,
+    prev.call.grouped = groupFromPreGrouped(
+      preGroupedCall,
       prev.call.strikes,
-      startTime
+      timeToSeconds(startTime)
     );
-    prev.put.grouped = groupOptionData(
-      datasets.put,
+    prev.put.grouped = groupFromPreGrouped(
+      preGroupedPut,
       prev.put.strikes,
-      startTime
+      timeToSeconds(startTime)
     );
 
     clientState.set(clientId, prev);
@@ -321,8 +344,8 @@ module.exports = function (socket) {
       socket,
       prev,
       datasets.spot,
-      datasets.call,
-      datasets.put,
+      preGroupedCall,
+      preGroupedPut,
       clientState,
       clientId
     );
@@ -342,10 +365,10 @@ module.exports = function (socket) {
 
     const mergedStrikes = Array.from(existingStrikes);
     state[type].strikes = mergedStrikes;
-    state[type].grouped = groupOptionData(
-      datasets[type],
+    state[type].grouped = groupFromPreGrouped(
+      type === "call" ? preGroupedCall : preGroupedPut,
       mergedStrikes,
-      state.startTime
+      timeToSeconds(state.startTime)
     );
 
     clientState.set(clientId, state);
@@ -366,10 +389,10 @@ module.exports = function (socket) {
 
     const updatedStrikes = Array.from(currentStrikes);
     state[type].strikes = updatedStrikes;
-    state[type].grouped = groupOptionData(
-      datasets[type],
+    state[type].grouped = groupFromPreGrouped(
+      type === "call" ? preGroupedCall : preGroupedPut,
       updatedStrikes,
-      state.startTime
+      timeToSeconds(state.startTime)
     );
 
     clientState.set(clientId, state);
@@ -411,8 +434,8 @@ module.exports = function (socket) {
       socket,
       state,
       datasets.spot,
-      datasets.call,
-      datasets.put,
+      preGroupedCall,
+      preGroupedPut,
       clientState,
       clientId
     );
@@ -442,8 +465,8 @@ module.exports = function (socket) {
       socket,
       state,
       datasets.spot,
-      datasets.call,
-      datasets.put,
+      preGroupedCall,
+      preGroupedPut,
       clientState,
       clientId
     );
@@ -509,8 +532,8 @@ module.exports = function (socket) {
       socket,
       session,
       datasets.spot,
-      datasets.call,
-      datasets.put,
+      preGroupedCall,
+      preGroupedPut,
       clientState,
       clientId
     );
