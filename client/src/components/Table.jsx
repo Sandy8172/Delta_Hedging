@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { getSocket } from "../utils/socket";
 import { toastPromise } from "../utils/toast.promise";
 
@@ -131,6 +131,10 @@ const Table = ({ dataRows, type, onTotalValueChange, factor }) => {
     onTotalValueChange(totalRow.totalValue);
   }, [totalRow.totalValue]);
 
+  const sortedDataRows = useMemo(() => {
+    return [...dataRows].sort((a, b) => a.Strike_Price - b.Strike_Price);
+  }, [dataRows]);
+
   return (
     <div className="relative overflow-x-auto shadow-md sm:rounded-lg max-h-[37vh] mt-2 scrollbar-custom ">
       <table className="w-full table-fixed  text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400 max-h-[50%]">
@@ -170,7 +174,7 @@ const Table = ({ dataRows, type, onTotalValueChange, factor }) => {
           </tr>
         </thead>
         <tbody>
-          {dataRows?.map((ele, ind) => {
+          {sortedDataRows?.map((ele, ind) => {
             const strike = ele.Strike_Price;
             const totalQty = quantities[strike] || 0;
             const avg = (parseFloat(ele.Bid) + parseFloat(ele.Ask)) / 2;
@@ -181,7 +185,7 @@ const Table = ({ dataRows, type, onTotalValueChange, factor }) => {
                   <input
                     id="checkbox"
                     type="checkbox"
-                     tabIndex={-1} 
+                    tabIndex={-1}
                     onChange={() => CheckboxClickHandler(ele.Strike_Price)}
                     checked={selectedStrikes.includes(ele.Strike_Price)}
                     className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 cursor-pointer"
@@ -210,7 +214,7 @@ const Table = ({ dataRows, type, onTotalValueChange, factor }) => {
                     onKeyDown={(e) =>
                       handleInputKeyDown(e, strike, ele.Bid, ele.Ask, ele.Time)
                     }
-                    className="w-20 px-2 py-1 rounded bg-gray-100 dark:bg-gray-600 text-sm"
+                    className="w-20 px-2 py-1 my-0.25 rounded bg-gray-100 dark:bg-gray-600"
                     placeholder="+/- qty"
                   />
                 </td>

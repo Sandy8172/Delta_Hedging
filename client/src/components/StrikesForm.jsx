@@ -79,7 +79,7 @@ const StrikesForm = ({ type, availableStrikes }) => {
             </li>
           );
         }}
-        style={{ width: 300 }}
+        style={{ width: 280 }}
         size="small"
         renderTags={(value, getTagProps) => {
           return value.map((strike, index) => {
@@ -143,7 +143,7 @@ const StrikesForm = ({ type, availableStrikes }) => {
       <button
         type="submit"
         tabIndex={-1}
-        className="text-blue-700 cursor-pointer rounded-full hover:text-white border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium text-sm px-5 py-2.5 text-centerdark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-500 dark:focus:ring-blue-800"
+        className="text-blue-700 cursor-pointer rounded-full hover:text-white border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium text-xs px-5 py-2.5 text-centerdark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-500 dark:focus:ring-blue-800"
       >
         Add
       </button>
